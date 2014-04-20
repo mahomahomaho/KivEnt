@@ -46,6 +46,15 @@ TestGame:
             physics_system: 'physics'
             system_id: 'steering'
             gameworld: gameworld
+        SteeringAISystem:
+            physics_system: 'physics'
+            system_id: 'steering_ai'
+            steering_system: 'steering'
+            view_system: 'ship'
+            gameworld: gameworld
+        ShipSystem:
+            system_id: 'ship'
+            gameworld: gameworld
     GameScreenManager:
         id: gamescreenmanager
         size: root.size
