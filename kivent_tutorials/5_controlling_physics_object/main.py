@@ -114,10 +114,10 @@ class TestGame(Widget):
         y_vel = 0
         angle = 0
         angular_velocity = 0
-        view_distance = 200
+        view_distance = 250
         view_dict = {'vertices': [(0., 0.), (0, 88.), 
             (view_distance, 108.), (view_distance, -20.)],
-            'offset': (96,44.)}
+            'offset': (45,44.)}
         view_shape_dict = {'shape_type': 'poly', 'elasticity': 0.0, 
             'collision_type':2, 'shape_info': view_dict, 'friction': 0.0}
         shape_dict = {'inner_radius': 0, 'outer_radius': 45, 
@@ -133,17 +133,17 @@ class TestGame(Widget):
             'ang_vel_limit': radians(900), 
             'mass': 50, 'col_shapes': col_shapes}
         steering_component = {
-            'turn_speed': 4.0,
+            'turn_speed': 6.0,
             'stability': 600000.0,
             'max_force': 100000.0,
-            'speed': 200.,
             }
         steering_ai_component = {
-            'avoidance_max': 150.,
-            'change_time': 2.0,
-            'state': 'Wander'
+            'avoidance_max': 400.,
+            'decision_time': .1,
+            'state': 'Wander',
+            'speed': 350.,
             }
-        ship_component = {'in_view': set()}
+        ship_component = {'in_view': set(), 'view_distance': view_distance}
         create_component_dict = {'physics': physics_component, 
             'physics_renderer': {'texture': 'ship7', 'size': (96 , 88)}, 
             'position': pos, 'rotate': 0, 'steering': steering_component,

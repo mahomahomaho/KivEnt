@@ -154,8 +154,10 @@ class CymunkPhysics(GameSystem):
         if not shape.collision_type in ignore_groups:
             self.bb_query_result.append(shape.body.data)
 
-    def segment_query_func(self, object shape, float t, dict n):
-        self.segment_query_result.append((shape.body.data, t, n))
+    def segment_query_func(self, Shape shape, float t, dict n):
+        ignore_groups = self.ignore_groups
+        if not shape.collision_type in ignore_groups:
+            self.segment_query_result.append((shape.body.data, t, n))
 
     def query_on_screen(self):
         '''Used internally to query entities on screen for a frame. Prefer to
@@ -169,7 +171,7 @@ class CymunkPhysics(GameSystem):
         current_on_screen = self.query_bb(bb_list)
         return current_on_screen
 
-    def query_segment(self, vect_start, vect_end):
+    def query_segment(self, vect_start, vect_end, ignore_groups=[]):
         '''
         Args:
             vect_start (tuple): (x1, y1) start point of segment.
@@ -177,6 +179,7 @@ class CymunkPhysics(GameSystem):
             vect_end (tuple): (x2, y2) end point of segment.
 
         Queries collisions between (x1, y1) and (x2, y2)'''
+        self.ignore_groups=ignore_groups
         self.segment_query_result = []
         self.space.space_segment_query(vect_start, vect_end)
         return self.segment_query_result
