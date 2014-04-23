@@ -5,6 +5,7 @@ from kivy.properties import (StringProperty, ListProperty,
 from kivy.clock import Clock
 from math import fabs
 from kivy.core.window import Window
+from kivy.storage.jsonstore import JsonStore
 
 
 class Component(object):
@@ -132,7 +133,7 @@ class GameSystem(Widget):
     gameworld = ObjectProperty(None)
     viewport = StringProperty('default_gameview')
     update_time = NumericProperty(1./60.)
-
+    json_file = StringProperty(None)
 
     def __init__(self, **kwargs):
         cdef list entity_ids
@@ -140,6 +141,18 @@ class GameSystem(Widget):
         super(GameSystem, self).__init__(**kwargs)
         self.entity_ids = list()
         self.frame_time = 0.0
+        self.data = None
+        self.load_data_from_json()
+
+    def load_data_from_json(self):
+        json_file = self.json_file
+        data = self.data
+        try:
+            json = JsonStore(json_file)
+        except:
+            return
+        for each in json:
+            data[each] = json[each]
 
     def update(self, dt):
         '''

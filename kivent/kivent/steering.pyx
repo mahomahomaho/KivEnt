@@ -218,6 +218,7 @@ class SteeringAISystem(GameSystem):
         cdef cpVect avoid_tot = cpv(0., 0.)
         cdef set in_view = view_data.in_view
         cdef float dist
+        cdef float dist_to_target = cpvdist(target, b_pos)
         cdef float scaling_factor
         cdef float view_distance = view_data.view_distance
         cdef cpVect center_vec = cpvadd(
@@ -227,10 +228,21 @@ class SteeringAISystem(GameSystem):
             view_physics_data = getattr(entity, physics_id)
             view_body = view_physics_data._body
             view_pos = view_body._body.p
-            avoid_vec = cpvsub(center_vec, view_pos)
             dist = cpvdist(view_pos, b_pos)
-            scaling_factor = view_distance / dist
-            avoid_tot = cpvadd(avoid_tot, cpvmult(avoid_vec, scaling_factor))
+            if dist > 300. or dist > dist_to_target:
+                continue
+            view_vel = view_body._body.v
+            if cpvdist(center_vec, view_pos) < cpvdist(b_pos, view_pos):
+                avoid_vec = cpvsub(center_vec, view_pos)
+            else:
+                avoid_vec = cpvsub(b_pos, view_pos)
+            
+            scaling_factor = 1./(dist/300.)
+            if dist > 150.:
+                avoid_tot = cpvadd(
+                    avoid_tot, cpvmult(avoid_vec, scaling_factor))
+            else:
+                avoid_tot = cpvadd(avoid_tot, avoid_vec)
         return cpvmult(cpvnormalize(avoid_tot), max_avoid)
 
     def calculate_desired_velocity(self, Body body, 

@@ -2,32 +2,103 @@ from kivy.clock import Clock
 from functools import partial
 
 
-cdef class ProjectileComponent:
+cdef class ProjectileEmitterConfig:
+    cdef float _muzzle_impulse
+    cdef float _muzzle_force
+    cdef int _projectile_count
+    cdef float _rate_of_fire
+    cdef int _clip_size
+    cdef float _reload_time
+
+    def __cinit__(self, float muzzle_impulse, float muzzle_force,
+        int projectile_count, float rate_of_fire, int clip_size, 
+        float reload_time):
+
+        self._muzzle_impulse = muzzle_impulse
+        self._muzzle_force = muzzle_force
+        self._projectile_count = projectile_count
+        self._rate_of_fire = rate_of_fire
+        self._clip_size = clip_size
+        self._reload_time = reload_time
+
+
+cdef class ProjectileConfig:
+    cdef float _width
+    cdef float _height
+    cdef float _mass
     cdef float _damage
-    cdef float _accel
-    cdef bool _armed
+    cdef float _max_speed
+    cdef float _max_ang_speed
+    cdef dict _effects
+    cdef str _sound
+    cdef str _texture
+    cdef str _type
     cdef float _lifespan
-    cdef list _linked
-    
-    def __cinit__(self, float damage, float accel, 
-        bool armed, float life_span):
+
+    def __cinit__(self, float width, float height, float mass, float damage,
+        float max_speed, float max_ang_speed, dict effects, str sound, 
+        str ptype, str texture, float lifespan):
+
+        self._width = width
+        self._height = height
+        self._mass = mass
         self._damage = damage
-        self._accel = accel
-        self._armed = armed
-        self._linked = []
-        self._lifespan = life_span
+        self._max_speed = max_speed
+        self._max_ang_speed = max_ang_speed
+        self._effects = effects
+        self._type = ptype
+        self._sound = sound
+        self._texture = texture
+        self._lifespan = lifespan
+
+
+cdef class ProjectileEmitterComponent:
+    cdef list _offsets
+    cdef list _type
+    cdef bool _reloading
+    cdef float _current_time
+    cdef bool _can_fire
+    cdef dict _ammo
+    cdef int _current_clip
+    cdef int parent
+    cdef ProjectileEmitterConfig _config
+
+    def __cinit__(self, list offsets, list types,
+        str current_type, ProjectileEmitterConfig config,
+        dict ammo_counts):
+
+        self._offsets = offsets
+        self._types = types
+        self._current_type = current_type
+        self._current_time = 0.0
+        self._can_fire = False
+        self._reloading = True
+        self._config = config
+        self._ammo_counts = ammo_counts
+        self._current_clip = 0.0
+
+
+cdef class ProjectileComponent:
+    cdef float _lifespan
+    cdef list _effects
+    cdef str _type
+    cdef float _current_time
+    cdef ProjectileConfig _config
+    
+    def __cinit__(self, ProjectileConfig config):
+        self._effects = []
+        self._lifespan = config._life_span
+        self._current_time = 0.0
+        self._type = config._type
+        self._config = config
 
     property damage:
         def __get__(self):
-            return self._damage
-        def __set__(self, float value):
-            self._damage = value
+            return self._config._damage
 
-    property accel:
+    property max_speed:
         def __get__(self):
-            return self._accel
-        def __set__(self, float value):
-            self._accel = value
+            return self._config._max_speed
 
     property lifespan:
         def __get__(self):
@@ -35,69 +106,174 @@ cdef class ProjectileComponent:
         def __set__(self, float value):
             self._lifespan = value
 
-    property armed:
+    property effects:
         def __get__(self):
-            return self._armed
-        def __set__(self, bool value):
-            self._armed = value
-
-    property linked:
-        def __get__(self):
-            return self._linked
+            return self._effects
         def __set__(self, list value):
-            self._linked = value
+            self._effects = value
 
-cdef tuple get_rotated_vector(float angle, float x, float y):
-        return ((y * cos(angle)) - (x * sin(angle)), 
-            (x * cos(angle)) + (y * sin(angle)))
+    property current_time:
+        def __get__(self):
+            return self._current_time
+        def __set__(self, float value):
+            self._current_time = value
 
-class ProjectileSystem(GameSystem):
+
+class ProjectileEmitterSystem(GameSystem):
+    physics_system = StringProperty(None)
+
 
     def __init__(self, **kwargs):
-        super(ProjectileSystem, self).__init__(**kwargs)
+        super(ProjectileEmitterSystem, self).__init__(**kwargs)
         self.fire_events = []
         self.setup_projectiles_dicts()
 
     def add_fire_event(self, int entity_id):
         self.fire_events.append(entity_id)
 
-    def update(self, dt):
-        cdef list fire_events = self.fire_events
-        gameworld = self.gameworld
-        cdef dict systems = gameworld.systems
+    def generate_component(self, dict args):
+        offsets = args['offsets']
+        barrel_count = args['barrel_count']
+        types = args['types']
+        current_type = args['current_type']
+        new_component = ProjectileEmitterComponent.__new__(
+            ProjectileEmitterComponent, offsets, barrel_count, types,
+            current_type)
+        return new_component
+
+    def spawn_projectile_with_dict(self, tuple location, float angle, 
+        int collision_type, ProjectileConfig config):
+        cdef object gameworld = self.gameworld
+        init_entity = gameworld.init_entity
         cdef list entities = gameworld.entities
-        cdef list entity_ids = self.entity_ids
-        player_character_system = systems['player_character']
-        sound_system = gameworld.systems['sound_system']
-        cdef dict projectiles_dict = self.projectiles_dict
-        spawn_proj = self.spawn_projectile_with_dict
-        fire_projectile = self.fire_projectile
-        c_once = Clock.schedule_once
-        cdef int num_events = len(fire_events)
-        timed_remove_entity = gameworld.timed_remove_entity
-        fe_p = fire_events.pop
-        cdef int i
-        cdef int entity_id
-        cdef object character
-        cdef int current_bullet_ammo, current_rocket_ammo
+        cdef float width = config._width
+        cdef float height = config._height
+        cdef float mass = config._mass
+        cdef float max_speed = config._max_speed
+        cdef float max_ang_speed = config._max_ang_speed
+        cdef str texture = config._texture
+        cdef str ptype = config._type
+        cdef float lifespan = config._lifespan
+        cdef dict effects = config._effects
+        cdef dict projectile_box_dict = {
+            'width': width, 
+            'height': height, 
+            'mass': mass}
+        cdef dict projectile_col_shape_dict = {
+            'shape_type': 'box', 'elasticity': 1.0, 
+            'collision_type': collision_type, 
+            'shape_info': projectile_box_dict, 
+            'friction': .3}
+        cdef dict projectile_physics_component_dict = { 
+            'main_shape': 'box', 
+            'velocity': (0, 0), 
+            'position': location, 
+            'angle': angle, 
+            'angular_velocity': 0, 
+            'mass': mass, 
+            'vel_limit': max_speed, 
+            'ang_vel_limit': keRadians(max_ang_speed),
+            'col_shapes': [projectile_col_shape_dict]}
+        cdef dict projectile_renderer_dict = {
+            'texture': texture, 
+            'size': (width, height)}
+        cdef dict create_projectile_dict = {
+            'position': location,
+            'rotate': angle,
+            'cymunk_physics': projectile_physics_component_dict, 
+            'physics_renderer': projectile_renderer_dict, 
+            'projectile_system': (lifespan, config)}
+        cdef list component_order = ['position', 'rotate', 'cymunk_physics', 
+            'physics_renderer', 'projectile_system']
+        cdef int bullet_ent_id = init_entity(
+            create_projectile_dict, component_order)
+        cdef ProjectileComponent projectile_system_data = entities[
+            bullet_ent_id].projectile_system
+        cdef ParticleComponent particle_comp
+        if 'engine' in effects:
+            particle_system1 = {'particle_file': effects['engine'], 
+                'offset': height*.5, 
+                'parent': bullet_ent_id}
+            p_ent = init_entity(
+                {'particles': particle_system1}, ['particles'])
+            particle_comp = entities[p_ent].particles
+            particle_comp._system_on = True
+            projectile_system_data._effects['engine'] = p_ent
+        if 'explosion' in effects:
+            particle_system2 = {'particle_file': effects['explosion'], 
+                'offset': 0, 'parent': bullet_ent_id}
+            p_ent2 = init_entity(
+                {'particles': particle_system2}, ['particles'])
+            projectile_system_data._effects['explosion'] = p_ent2
+        return bullet_ent_id
+
+    def load_data_from_json(self):
+        json_file = self.json_file
+        cdef dict data = self.data
+        cdef float muzzle_impulse, 
+        cdef float muzzle_force,
+        cdef int projectile_count, 
+        cdef float rate_of_fire, 
+        cdef int clip_size, 
+        cdef float reload_time, 
         cdef str projectile_type
-        cdef float projectile_width
-        cdef float projectile_height
-        cdef PhysicsComponent character_physics
-        cdef PositionComponent character_position
-        cdef list hard_points
-        cdef int number_of_shots
-        cdef tuple position_offset
-        cdef float angle
-        cdef float x, y
+        try:
+            json = JsonStore(json_file)
+        except:
+            return
+        for each in json:
+            json_data = json[each]
+            muzzle_impulse = json_data['muzzle_impulse']
+            muzzle_force = json_data['muzzle_force']
+            projectile_count = json_data['projectile_count']
+            rate_of_fire = json_data['rate_of_fire']
+            clip_size = json_data['clip_size']
+            reload_time = json_data['reload_time']
+            data[each] = ProjectileEmitterConfig.__new__(
+                ProjectileEmitterConfig, muzzle_impulse, muzzle_force,
+                projectile_count, rate_of_fire, clip_size, reload_time)
+
+    def update(self, dt):
+        cdef object gameworld = self.gameworld
+        cdef list entities = gameworld.entities
+        cdef int entity_id
+        cdef list fire_events = self.fire_events
+        cdef list entity_ids = self.entity_ids
+        cdef object entity
+        cdef str system_id = self.system_id
+        cdef ProjectileEmitterConfig config
+        cdef ProjectileEmitterComponent p_emitter_comp
+        cdef float c_time
+        cdef bool can_fire
+        cdef bool reloading
+        cdef float rof
+        cdef float reload_time
+
         for entity_id in entity_ids:
             entity = entities[entity_id]
-            projectile_system = entity.projectile_system
-            if not hasattr(projectile_system, 'linked'): 
-                projectile_system._lifespan += dt
-                if projectile_system._lifespan >= 14.0:
-                    c_once(
-                        partial(timed_remove_entity, entity_id))
+            p_emitter_comp = getattr(entity, system_id)
+            config = p_emitter_comp._config
+            reloading = p_emitter_comp._reloading
+            can_fire = p_emitter_comp._can_fire
+            if reloading or not can_fire:
+                p_emitter_comp._current_time += dt
+            c_time = p_emitter_comp._current_time
+            rof = config._rate_of_fire
+            reload_time = config._reload_time
+            if reloading and c_time > reload_time:
+                p_emitter_comp._reloading = reloading = False
+                p_emitter_comp._current_time = 0.0
+            elif not can_fire and c_time > rof:
+                p_emitter_comp._can_fire = can_fire = True
+                p_emitter_comp._current_time = 0.0
+
+            if can_fire and not reloading and entity_id in fire_events:
+                pass
+                #do fire gun
+
+        self.fire_events = []
+
+
         for i in xrange(num_events):
             entity_id = fe_p(0)
             character = entities[entity_id]
@@ -145,14 +321,80 @@ class ProjectileSystem(GameSystem):
                     player_character_system.current_bullet_ammo = ship_system_data.current_bullet_ammo
                     player_character_system.current_rocket_ammo = ship_system_data.current_rocket_ammo
 
+
+class ProjectileSystem(GameSystem):
+    bullet_collision_type = NumericProperty(None)
+    types_to_collide = ListProperty([])
+    types_to_ignore = ListProperty([])
+    sound_system = StringProperty(None)
+    collision_callback = ObjectProperty(None)
+    bullet_to_bullet_callback = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        super(ProjectileSystem, self).__init__(**kwargs)
+
+    def load_data_from_json(self):
+        json_file = self.json_file
+        cdef dict data = self.data
+        cdef float width
+        cdef float height
+        cdef float mass
+        cdef float damage
+        cdef float max_speed
+        cdef float max_ang_speed
+        cdef dict effects
+        cdef str sound
+        cdef str ptype
+        cdef str texture
+        try:
+            json = JsonStore(json_file)
+        except:
+            return
+        for each in json:
+            json_data = json[each]
+            width = json_data['width']
+            height = json_data['height']
+            mass = json_data['mass']
+            damage = json_data['damage']
+            max_speed = json_data['max_speed']
+            max_ang_speed = json_data['max_ang_speed']
+            effects = json_data['effects']
+            sound = json_data['sound']
+            ptype = json_data['type']
+            texture = json_data['texture']
+            lifespan = json_data['lifespan']
+            data[each] = ProjectileConfig.__new__(ProjectileConfig, 
+                width, height, mass, damage, max_speed, max_ang_speed, 
+                effects, sound, ptype, texture)
+
+    def update(self, dt):
+        cdef int entity_id
+        cdef object gameworld = self.gameworld
+        cdef list entity_ids = self.entity_ids
+        cdef list entities = gameworld.entities
+        cdef object entity
+        cdef ProjectileComponent projectile_system
+        cdef float lifespan
+        c_once = Clock.schedule_once
+        timed_remove_entity = self.timed_remove_entity
+        for entity_id in entity_ids:
+            entity = entities[entity_id]
+            projectile_system = entity.projectile_system
+            lifespan = projectile_system._lifespan
+            if lifespan > 0:
+                projectile_system._current_time += dt
+                if projectile_system._current_time >= lifespan:
+                    c_once(partial(timed_remove_entity, entity_id))
+  
     def remove_entity(self, int entity_id):
-        gameworld = self.gameworld
-        entities = gameworld.entities
-        entity = entities[entity_id]
-        if hasattr(entity.projectile_system, 'linked'):
-            linked = entity.projectile_system.linked
-            for each in linked:
-                gameworld.remove_entity(each)
+        cdef object gameworld = self.gameworld
+        cdef list entities = gameworld.entities
+        cdef object entity = entities[entity_id]
+        cdef ProjectileComponent projectile_system = entity.projectile_system
+        cdef dict effects = entity.projectile_system._effects
+        remove_entity = gameworld.remove_entity
+        for each in effects:
+            remove_entity(effects[each])
         super(ProjectileSystem, self).remove_entity(entity_id)
 
     def create_rocket_explosion(self, entity_id):
@@ -185,114 +427,14 @@ class ProjectileSystem(GameSystem):
         self.fire_projectile(bullet_ent_id)
 
     def generate_component(self, tuple projectile_args):
+        #(float damage, bool armed, float life_span,
+        #ProjectileConfig config)
+        cdef ProjectileConfig config = self.data[projectile_args[3]]
         new_component = ProjectileComponent.__new__(ProjectileComponent, 
             projectile_args[0], projectile_args[1], projectile_args[2], 
-            projectile_args[3])
+            config)
         return new_component
 
-    def setup_projectiles_dicts(self):
-        self.projectiles_dict = projectiles_dict = {}
-        projectiles_dict['14px_bullet'] = {
-            'width': 14, 'height': 14, 'mass': 50, 
-            'vel_limit': 260, 'ang_vel_limit': 60, 
-            'damage': 10, 'cooldown': .25,
-            'accel': 25000, 'texture': 'bullet-14px', 
-            'type': 'bullet'}
-        projectiles_dict['8px_bullet'] = {
-            'width': 8, 'height': 8, 'mass': 45, 
-            'vel_limit': 275, 'ang_vel_limit': 60, 
-            'damage': 9, 'cooldown': .20,
-            'accel': 25000, 'texture': 'bullet-8px', 
-            'type': 'bullet'}
-        projectiles_dict['6px_bullet'] = {
-            'width': 6, 'height': 6, 'mass': 35, 
-            'vel_limit': 300, 'ang_vel_limit': 60, 
-            'damage': 7, 'cooldown': .15,
-            'accel': 25000, 'texture': 'bullet-6px', 
-            'type': 'bullet'}
-        projectiles_dict['14px_rocket'] = {
-            'width': 28, 'height': 14, 'mass': 75, 
-            'vel_limit': 260, 'ang_vel_limit': 60, 
-            'damage': 25, 'cooldown': 1.0,
-            'accel': 40000, 'texture': 'rocket-14px', 
-            'type': 'rocket'}
-        projectiles_dict['8px_rocket'] = {
-            'width': 20, 'height': 8, 'mass': 60, 
-            'vel_limit': 260, 'ang_vel_limit': 60, 
-            'damage': 18, 'cooldown': .9,
-            'accel': 25000, 'texture': 'rocket-8px', 
-            'type': 'rocket'}
-        projectiles_dict['6px_rocket'] = {
-            'width': 14, 'height': 6, 'mass': 50, 
-            'vel_limit': 260, 'ang_vel_limit': 60, 
-            'damage': 11, 'cooldown': .8,
-            'accel': 25000, 'texture': 'rocket-6px', 
-            'type': 'rocket'}
-
-    def spawn_projectile_with_dict(self, 
-        location, angle, color, projectile_dict):
-        gameworld = self.gameworld
-        init_entity = gameworld.init_entity
-        entities = gameworld.entities
-        projectile_box_dict = {
-            'width': projectile_dict['width'], 
-            'height': projectile_dict['height'], 
-            'mass': projectile_dict['mass']}
-        projectile_col_shape_dict = {
-            'shape_type': 'box', 'elasticity': 1.0, 
-            'collision_type': 3, 
-            'shape_info': projectile_box_dict, 
-            'friction': .3}
-        projectile_physics_component_dict = { 
-            'main_shape': 'box', 
-            'velocity': (0, 0), 
-            'position': location, 
-            'angle': angle, 
-            'angular_velocity': 0, 
-            'mass': projectile_dict['mass'], 
-            'vel_limit': projectile_dict['vel_limit'], 
-            'ang_vel_limit': keRadians(projectile_dict['ang_vel_limit']),
-            'col_shapes': [projectile_col_shape_dict]}
-        projectile_renderer_dict = {
-            'texture': projectile_dict['texture'], 
-            'size': (projectile_dict['width'], projectile_dict['height'])}
-        create_projectile_dict = {
-            'position': location,
-            'rotate': angle,
-            'cymunk_physics': projectile_physics_component_dict, 
-            'physics_renderer': projectile_renderer_dict, 
-            'projectile_system': (projectile_dict['damage'], 
-                projectile_dict['accel'], True, 0.0)}
-        component_order = ['position', 'rotate', 'cymunk_physics', 
-            'physics_renderer', 'projectile_system']
-        bullet_ent_id = init_entity(create_projectile_dict, component_order)
-        if projectile_dict['type'] == 'rocket':
-            if color == 'orange':
-                effect_string = 'assets/pexfiles/rocket_burn_effect1.pex'
-                explosion_string = 'assets/pexfiles/rocket_explosion_1.pex'
-            elif color == 'blue':
-                effect_string = 'assets/pexfiles/rocket_burn_effect2.pex'
-                explosion_string = 'assets/pexfiles/rocket_explosion_2.pex'
-            elif color == 'green':
-                effect_string = 'assets/pexfiles/rocket_burn_effect3.pex'
-                explosion_string = 'assets/pexfiles/rocket_explosion_3.pex'
-            elif color == 'purple':
-                effect_string = 'assets/pexfiles/rocket_burn_effect4.pex'
-                explosion_string = 'assets/pexfiles/rocket_explosion_4.pex'
-            particle_system1 = {'particle_file': effect_string, 
-                'offset': projectile_dict['height']*.5, 
-                'parent': bullet_ent_id}
-            particle_system2 = {'particle_file': explosion_string, 
-                'offset': 0, 'parent': bullet_ent_id}
-            p_ent = init_entity(
-                {'particles': particle_system1}, ['particles'])
-            p_ent2 = init_entity(
-                {'particles': particle_system2}, ['particles'])
-            particle_comp = entities[p_ent].particles
-            particle_comp.system_on = True
-            projectile_system_data = entities[bullet_ent_id].projectile_system
-            projectile_system_data.linked = [p_ent, p_ent2]
-        return bullet_ent_id
 
     def set_armed(self, entity_id, dt):
         entities = self.gameworld.entities
@@ -315,6 +457,9 @@ class ProjectileSystem(GameSystem):
             bullet_body.apply_force(force, force_offset)
             engine_effect = entities[projectile_system.linked[0]].particles
             engine_effect.system_on = True
+
+    def add_collision_callback(self, type_a, type_b, callback):
+        pass
 
 
     def clear_projectiles(self):
