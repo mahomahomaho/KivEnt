@@ -151,8 +151,9 @@ class GameSystem(Widget):
             json = JsonStore(json_file)
         except:
             return
-        for each in json:
-            data[each] = json[each]
+        else:
+            for each in json:
+                data[each] = json[each]
 
     def update(self, dt):
         '''

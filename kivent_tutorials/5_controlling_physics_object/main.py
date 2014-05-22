@@ -43,6 +43,7 @@ class TestGame(Widget):
     def __init__(self, **kwargs):
         super(TestGame, self).__init__(**kwargs)
         Clock.schedule_once(self.init_game)
+        print self.ids, 'here in __init__'
 
     def init_game(self, dt):
         self.setup_map()
@@ -65,7 +66,7 @@ class TestGame(Widget):
             pos = (250, 250)
             ship_id = self.create_ship(pos)
             self.current_entity = ship_id
-        for x in range(10):
+        for x in range(20):
             pos = randint(0, size[0]), randint(0, size[1])
             self.create_asteroid(pos)
 
@@ -88,10 +89,10 @@ class TestGame(Widget):
     def create_asteroid(self, pos):
         x_vel = randint(0, 10)
         y_vel = randint(0, 10)
-        angle = radians(randint(-360, 360))
-        angular_velocity = radians(randint(-150, -150))
+        angle = 0.0
+        angular_velocity = 0.0
         shape_dict = {'inner_radius': 0, 'outer_radius': 32, 
-            'mass': 50, 'offset': (0, 0)}
+            'mass': 5000, 'offset': (0, 0)}
         col_shape = {'shape_type': 'circle', 'elasticity': .5, 
             'collision_type': 3, 'shape_info': shape_dict, 'friction': 1.0}
         col_shapes = [col_shape]
@@ -101,25 +102,30 @@ class TestGame(Widget):
             'angular_velocity': angular_velocity, 
             'vel_limit': 250, 
             'ang_vel_limit': radians(200), 
-            'mass': 50, 'col_shapes': col_shapes}
+            'mass': 5000, 'col_shapes': col_shapes}
         create_component_dict = {'physics': physics_component, 
             'physics_renderer': {'texture': 'asteroid1', 'size': (64 , 64)}, 
             'position': pos, 'rotate': 0}
         component_order = ['position', 'rotate', 
             'physics', 'physics_renderer']
-        return self.gameworld.init_entity(create_component_dict, component_order)
+        return self.gameworld.init_entity(
+            create_component_dict, component_order)
 
     def create_ship(self, pos):
         x_vel = 0
         y_vel = 0
         angle = 0
         angular_velocity = 0
-        view_distance = 250
-        view_dict = {'vertices': [(0., 0.), (0, 88.), 
-            (view_distance, 108.), (view_distance, -20.)],
-            'offset': (45,44.)}
+        view_distance = 200
+        view_dict = {'vertices': [(80, 0), (80, 90), 
+            (80+view_distance, 110), (80+view_distance, -20)],
+            'offset': (0,0.)}
         view_shape_dict = {'shape_type': 'poly', 'elasticity': 0.0, 
             'collision_type':2, 'shape_info': view_dict, 'friction': 0.0}
+        collision_circ = {'inner_radius': 0, 'outer_radius': 300, 
+            'mass': 10, 'offset': (0, 0)}
+        col_circ_shape = {'shape_type': 'circle', 'elasticity': .0, 
+            'collision_type': 2, 'shape_info': collision_circ, 'friction': .7}
         shape_dict = {'inner_radius': 0, 'outer_radius': 45, 
             'mass': 10, 'offset': (0, 0)}
         col_shape = {'shape_type': 'circle', 'elasticity': .0, 
@@ -138,10 +144,10 @@ class TestGame(Widget):
             'max_force': 100000.0,
             }
         steering_ai_component = {
-            'avoidance_max': 400.,
+            'avoidance_max': 150.,
             'decision_time': .1,
             'state': 'Wander',
-            'speed': 350.,
+            'speed': 150.,
             }
         ship_component = {'in_view': set(), 'view_distance': view_distance}
         create_component_dict = {'physics': physics_component, 
@@ -151,7 +157,8 @@ class TestGame(Widget):
         component_order = ['position', 'rotate', 
             'physics', 'physics_renderer', 'steering', 'steering_ai',
             'ship']
-        return self.gameworld.init_entity(create_component_dict, component_order)
+        return self.gameworld.init_entity(
+            create_component_dict, component_order)
 
     def setup_map(self):
         gameworld = self.gameworld

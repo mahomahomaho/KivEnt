@@ -32,7 +32,7 @@ cdef class ProjectileConfig:
     cdef dict _effects
     cdef str _sound
     cdef str _texture
-    cdef str _type
+    cdef str _ptype
     cdef float _lifespan
 
     def __cinit__(self, float width, float height, float mass, float damage,
@@ -46,7 +46,7 @@ cdef class ProjectileConfig:
         self._max_speed = max_speed
         self._max_ang_speed = max_ang_speed
         self._effects = effects
-        self._type = ptype
+        self._ptype = ptype
         self._sound = sound
         self._texture = texture
         self._lifespan = lifespan
@@ -54,7 +54,7 @@ cdef class ProjectileConfig:
 
 cdef class ProjectileEmitterComponent:
     cdef list _offsets
-    cdef list _type
+    cdef list _ptype
     cdef bool _reloading
     cdef float _current_time
     cdef bool _can_fire
@@ -65,10 +65,10 @@ cdef class ProjectileEmitterComponent:
 
     def __cinit__(self, list offsets, list types,
         str current_type, ProjectileEmitterConfig config,
-        dict ammo_counts):
+        dict ammo_counts, int parent):
 
         self._offsets = offsets
-        self._types = types
+        self._ptypes = types
         self._current_type = current_type
         self._current_time = 0.0
         self._can_fire = False
@@ -76,12 +76,13 @@ cdef class ProjectileEmitterComponent:
         self._config = config
         self._ammo_counts = ammo_counts
         self._current_clip = 0.0
+        self._parent = parent
 
 
 cdef class ProjectileComponent:
     cdef float _lifespan
     cdef list _effects
-    cdef str _type
+    cdef str _ptype
     cdef float _current_time
     cdef ProjectileConfig _config
     
@@ -89,7 +90,7 @@ cdef class ProjectileComponent:
         self._effects = []
         self._lifespan = config._life_span
         self._current_time = 0.0
-        self._type = config._type
+        self._ptype = config._ptype
         self._config = config
 
     property damage:
@@ -232,6 +233,22 @@ class ProjectileEmitterSystem(GameSystem):
             data[each] = ProjectileEmitterConfig.__new__(
                 ProjectileEmitterConfig, muzzle_impulse, muzzle_force,
                 projectile_count, rate_of_fire, clip_size, reload_time)
+
+    def fire_projectile(self, entity_id):
+        entities = self.gameworld.entities
+        bullet = entities[entity_id]
+        physics_data = bullet.cymunk_physics
+        unit_vector = physics_data.unit_vector
+        projectile_system = bullet.projectile_system
+        bullet_accel = projectile_system.accel
+        force = bullet_accel*unit_vector[0], bullet_accel*unit_vector[1]
+        force_offset = -unit_vector[0], -unit_vector[1]
+        bullet_body = bullet.cymunk_physics.body
+        bullet_body.apply_impulse(force, force_offset)
+        if len(projectile_system.linked) > 0:
+            bullet_body.apply_force(force, force_offset)
+            engine_effect = entities[projectile_system.linked[0]].particles
+            engine_effect.system_on = True
 
     def update(self, dt):
         cdef object gameworld = self.gameworld
@@ -442,21 +459,7 @@ class ProjectileSystem(GameSystem):
         if hasattr(bullet, 'projectile_system'):
             bullet.projectile_system.armed = True
 
-    def fire_projectile(self, entity_id):
-        entities = self.gameworld.entities
-        bullet = entities[entity_id]
-        physics_data = bullet.cymunk_physics
-        unit_vector = physics_data.unit_vector
-        projectile_system = bullet.projectile_system
-        bullet_accel = projectile_system.accel
-        force = bullet_accel*unit_vector[0], bullet_accel*unit_vector[1]
-        force_offset = -unit_vector[0], -unit_vector[1]
-        bullet_body = bullet.cymunk_physics.body
-        bullet_body.apply_impulse(force, force_offset)
-        if len(projectile_system.linked) > 0:
-            bullet_body.apply_force(force, force_offset)
-            engine_effect = entities[projectile_system.linked[0]].particles
-            engine_effect.system_on = True
+    
 
     def add_collision_callback(self, type_a, type_b, callback):
         pass

@@ -1,0 +1,3 @@
+{"14px_rocket": {"muzzle_impulse": 50000.0, "muzzle_force": 50000.0, "projectile_count": 1, "rate_of_fire": 1.5, "clip_size": 5, "reload_time": 5.0},
+"8px_rocket": {"muzzle_impulse": 50000.0, "muzzle_force": 50000.0, "projectile_count": 1, "rate_of_fire": 1.2, "clip_size": 5, "reload_time": 4.0},
+"6px_rocket": {"muzzle_impulse": 50000.0, "muzzle_force": 50000.0, "projectile_count": 1, "rate_of_fire": 1.0, "clip_size": 5, "reload_time": 3.0},}}
