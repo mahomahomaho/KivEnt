@@ -581,6 +581,9 @@ class GameView(GameSystem):
         **entity_to_focus** (NumericProperty): Entity entity_id for the camera 
         to focus on if focus_entity is True.
 
+        **focus_entity_pos** (ListProperty): Position on the screen of entity
+        to focus on, relative to view size. Default: [0.5,0.5]
+
         **camera_speed_multiplier** (NumericProperty): Time it will take camera 
         to reach focused entity, Speed will be 1.0/camera_speed_multiplier 
         seconds to close the distance
@@ -614,6 +617,7 @@ class GameView(GameSystem):
     camera_pos = ListProperty((0, 0))
     camera_scale = NumericProperty(1.0)
     focus_entity = BooleanProperty(False)
+    focus_entity_pos = ListProperty((0.5,0.5))
     do_touch_zoom = BooleanProperty(False)
     do_scroll = BooleanProperty(True)
     entity_to_focus = NumericProperty(None, allownone=True)
@@ -686,6 +690,7 @@ class GameView(GameSystem):
 
     def update(self, dt):
         cdef int entity_to_focus
+        cdef float entity_pos_x, entity_pos_y
         cdef float dist_x
         cdef float dist_y
         cdef object entity
@@ -693,6 +698,7 @@ class GameView(GameSystem):
         cdef PositionComponent position_data
         gameworld = self.gameworld
         if self.focus_entity:
+            entity_pos_x,entity_pos_y = self.focus_entity_pos
             entity_to_focus = self.entity_to_focus
             entity = gameworld.entities[entity_to_focus]
             position_data = entity.position
@@ -701,8 +707,8 @@ class GameView(GameSystem):
             camera_size = self.size
             camera_scale = self.camera_scale
             size = camera_size[0] * camera_scale, camera_size[1] * camera_scale 
-            dist_x = -camera_pos[0] - position_data._x + size[0]*.5
-            dist_y = -camera_pos[1] - position_data._y + size[1]*.5
+            dist_x = -camera_pos[0] - position_data._x + size[0]*entity_pos_x
+            dist_y = -camera_pos[1] - position_data._y + size[1]*entity_pos_y
             if self.do_scroll_lock:
                dist_x, dist_y = self.lock_scroll(dist_x, dist_y)
             self.camera_pos[0] += dist_x*camera_speed_multiplier*dt
