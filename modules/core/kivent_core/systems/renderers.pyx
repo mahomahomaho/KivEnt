@@ -747,7 +747,6 @@ cdef class RotateRenderer(Renderer):
                     used = components_block.used_count
                     component_count = entity_components.count
                     component_data = <void**>components_block.data
-                    #Logger.debug("RotateRenderer.update: prepare frame data (current_frame=%s)"%batch.current_frame)
                     batch.current_frame += 1
                     frame_data = <VertexFormat7F*>batch.get_vbo_frame_to_draw()
                     frame_indices = <GLushort*>batch.get_indices_frame_to_draw()
