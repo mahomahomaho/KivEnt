@@ -204,6 +204,7 @@ cdef class IndexedBatch:
         cdef FixedFrameData frame_data = self.get_current_vbo()
         cdef FixedVBO indices = frame_data.index_vbo
         cdef FixedVBO vertices = frame_data.vertex_vbo
+        Logger.debug("Batch.draw_frame: current_frame = %s "%self.current_frame)
         gl_log_debug_message('IndexedBatch.draw_frame-vertices bind')
         vertices.bind()
         gl_log_debug_message('IndexedBatch.draw_frame-indices bind')
