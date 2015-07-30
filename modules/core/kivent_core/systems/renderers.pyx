@@ -715,6 +715,7 @@ cdef class RotateRenderer(Renderer):
 
 
     def update(self, force_update, dt):
+        Logger.debug("update: BEGIN force_update=%s dt=%s"%(force_update, dt))
         cdef IndexedBatch batch
         cdef list batches
         cdef unsigned int batch_key
@@ -739,15 +740,17 @@ cdef class RotateRenderer(Renderer):
         cdef bint static_rendering = self.static_rendering
 
         for batch_key in batch_groups:
+            Logger.debug("for batch_key=%r in batch_groups"%(batch_key))
             batches = batch_groups[batch_key]
             for batch in batches:
+                Logger.debug("for batch=%r in batches"%(batch))
                 if not static_rendering or force_update:
                     entity_components = batch.entity_components
                     components_block = entity_components.memory_block
                     used = components_block.used_count
                     component_count = entity_components.count
                     component_data = <void**>components_block.data
-                    Logger.debug("prepare frame data in batch %r , current_frame=%s"%(batch, batch.current_frame))
+                    Logger.debug("%r: prepare frame data, current_frame=%s"%(batch, batch.current_frame))
                     frame_data = <VertexFormat7F*>batch.get_vbo_frame_to_draw()
                     frame_indices = <GLushort*>batch.get_indices_frame_to_draw()
                     index_offset = 0
@@ -783,7 +786,10 @@ cdef class RotateRenderer(Renderer):
                             index_offset += model._index_count
                     batch.set_index_count_for_frame(index_offset)
                 mesh_instruction = batch.mesh_instruction
+                Logger.debug("%r:before mesh_instruction.flag_update()"%batch)
                 mesh_instruction.flag_update()
+                Logger.debug("%r:after mesh_instruction.flag_update()"%batch)
+        Logger.debug("update: END force_update=%s dt=%s"%(force_update, dt))
 
 
 cdef class ColorRenderer(Renderer):

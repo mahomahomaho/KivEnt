@@ -207,7 +207,7 @@ cdef class IndexedBatch:
         cdef FixedFrameData frame_data = self.get_current_vbo()
         cdef FixedVBO indices = frame_data.index_vbo
         cdef FixedVBO vertices = frame_data.vertex_vbo
-        Logger.debug("Batch %r current_frame = %s "%(self,self.current_frame))
+        Logger.debug("%r: draw_frame current_frame = %s "%(self,self.current_frame))
         gl_log_debug_message('IndexedBatch.draw_frame-vertices bind')
         vertices.bind()
         gl_log_debug_message('IndexedBatch.draw_frame-indices bind')
@@ -474,7 +474,7 @@ cdef class BatchManager:
             batch = self.batches[new_index]
             cmesh = batch.mesh_instruction
             batch.tex_key = tex_key
-            Logger.debug("reuse batch %r with current_frame=%s"%(batch,batch.current_frame))
+            Logger.debug("%r: reuse batch with mesh=%r and current_frame=%s"%(batch, cmesh, batch.current_frame))
         else:
             entity_components = ComponentPointerAggregator(
                 self.system_names, self.ent_per_batch,
