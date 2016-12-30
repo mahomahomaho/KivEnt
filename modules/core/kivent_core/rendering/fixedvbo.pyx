@@ -164,7 +164,7 @@ cdef class FixedVBO:
     cdef void reload(self):
         '''Will flag this VBO as V_NEEDGEN, set the **size_last_frame** to 0,
         and clear the **memory_block**.'''
-        self.flags = V_NEEDGEN
+        #self.flags = V_NEEDGEN
         self.size_last_frame = 0
         cdef Context context = get_context()
         if self.have_id():
