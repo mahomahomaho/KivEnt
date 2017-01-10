@@ -212,6 +212,7 @@ cdef class IndexedBatch:
         gl_log_debug_message('IndexedBatch.draw_frame-indices bind')
         indices.bind()
         #commentout for sphinx
+        Logger.debug("glDrawElements")
         glDrawElements(self.mode, indices.data_size // sizeof(GLushort),
             GL_UNSIGNED_SHORT, NULL)
         gl_log_debug_message('IndexedBatch.draw_frame-glDrawElements')
@@ -559,6 +560,7 @@ cdef class BatchManager:
         Return:
             tuple: batch_id, vert_index, indices_index.
         '''
+        Logger.debug("batch_entity(%s)", entity_id)
         cdef IndexedBatch batch = self.get_batch_with_space(
             tex_key, num_verts, num_indices)
         cdef tuple indices = batch.add_entity(entity_id, num_verts,
@@ -594,6 +596,7 @@ cdef class BatchManager:
             result in an exception propogating).
 
         '''
+        Logger.debug("unbatch_entity(%s)", entity_id)
         cdef IndexedBatch batch = self.batches[batch_id]
         batch.remove_entity(entity_id, num_verts, vert_index, num_indices,
             ind_index)
