@@ -1,11 +1,16 @@
 # cython: profile=True
 # cython: embedsignature=True
+
+from ilh import loggdesc_with,loggdesc_begin, loggdesc_end, loggdesc
+
 from cpython cimport bool
 from kivy.properties import (
     BooleanProperty, StringProperty, NumericProperty, ListProperty
     )
 from kivy.graphics import Callback
 from kivy.graphics.instructions cimport RenderContext
+from kivy.logger import Logger
+
 from kivent_core.rendering.vertex_formats cimport (
     VertexFormat4F, VertexFormat2F4UB, VertexFormat7F, VertexFormat4F4UB,
     VertexFormat7F4UB
@@ -144,6 +149,7 @@ cdef class RenderComponent(MemComponent):
                     component_data.texkey)
 
         def __set__(self, str value):
+            loggdesc_begin("texture_key.set")
             cdef RenderStruct* component_data = <RenderStruct*>self.pointer
             cdef unsigned int groupkey = (
                 texture_manager.get_groupkey_from_texkey(component_data.texkey))
@@ -151,14 +157,13 @@ cdef class RenderComponent(MemComponent):
                 value)
             cdef float u0, v0, u1, v1
             cdef list uv_list = texture_manager.get_uvs(texkey)
-            u0 = uv_list[0]
-            v0 = uv_list[1]
-            u1 = uv_list[2]
-            v1 = uv_list[3]
+            u0, v0, u1, v1 = uv_list
             same_batch = texture_manager.get_texkey_in_group(texkey, groupkey)
             cdef VertexModel model = <VertexModel>component_data.model
             cdef Renderer renderer = <Renderer>component_data.renderer
+            
             if not same_batch:
+                Logger.debug("not_same_batch")
                 renderer._unbatch_entity(component_data.entity_id,
                     component_data)
             component_data.texkey = texkey
@@ -167,8 +172,11 @@ cdef class RenderComponent(MemComponent):
             model[2].uvs = [u1, v1]
             model[3].uvs = [u1, v0]
             if not same_batch:
+                Logger.debug("not_same_batch(second)")
                 renderer._batch_entity(component_data.entity_id,
                     component_data)
+
+            loggdesc_end()
 
 
     property render:
@@ -528,6 +536,7 @@ cdef class Renderer(StaticMemGameSystem):
             model_key)
         self._init_component(component_index, entity_id, render, model, texkey)
 
+    @loggdesc('Renderer.update')
     def update(self, force_update, dt):
         '''
         Update function where all drawing of entities is performed.
@@ -564,13 +573,18 @@ cdef class Renderer(StaticMemGameSystem):
         cdef void** component_data
         cdef bint static_rendering = self.static_rendering
 
+        Logger.debug("force_update=%s len(batch_groups)=%s", force_update, len(batch_groups))
+
         for batch_key in batch_groups:
+          with loggdesc_with('batch_key=%s'%batch_key):
             batches = batch_groups[batch_key]
+            Logger.debug("len(batches)=%s", len(batches))
             for batch in batches:
                 if not static_rendering or force_update:
                     entity_components = batch.entity_components
                     components_block = entity_components.memory_block
                     used = components_block.used_count
+                    Logger.debug("used=%s", used)
                     component_count = entity_components.count
                     component_data = <void**>components_block.data
                     frame_data = <VertexFormat4F*>batch.get_vbo_frame_to_draw()

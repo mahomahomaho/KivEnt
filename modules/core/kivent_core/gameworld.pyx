@@ -1,8 +1,12 @@
 # cython: profile=True
 # cython: embedsignature=True
+
+from ilh import loggdesc_with, loggdesc_begin, loggdesc_end, loggdesc
+
+
 from kivy.uix.widget import Widget, WidgetException
 from kivy.properties import (StringProperty, ListProperty, NumericProperty,
-DictProperty, BooleanProperty, ObjectProperty)
+                             DictProperty, BooleanProperty, ObjectProperty)
 from kivy.clock import Clock
 from functools import partial
 from kivy.graphics import RenderContext
@@ -496,6 +500,7 @@ class GameWorld(Widget):
         entity.load_order = []
         entity_manager.remove_entity(entity_id)
 
+    @loggdesc('gameworld.update')
     def update(self, dt):
         '''
         Args:
@@ -507,6 +512,7 @@ class GameWorld(Widget):
         Typically you will call this function using either Clock.schedule_once
         or Clock.schedule_interval
         '''
+        #loggdesc_begin("gameworld.update")
         cdef SystemManager system_manager = self.system_manager
         cdef list systems = system_manager.systems
         cdef GameSystem system
@@ -515,6 +521,7 @@ class GameWorld(Widget):
             if system.updateable and not system.paused:
                 system._update(dt)
         self.remove_entities()
+        #loggdesc_end()
 
     def remove_entities(self):
         '''Used internally to remove entities as part of the update tick'''

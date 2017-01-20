@@ -17,6 +17,8 @@ from kivy.graphics.c_opengl cimport (GLushort, GL_UNSIGNED_SHORT, GL_TRIANGLES,
 from kivent_core.gameworld import debug
 from kivent_core.rendering.gl_debug cimport gl_log_debug_message
 
+from ilh import loggdesc_with
+
 cdef class IndexedBatch:
     '''The IndexedBatch represents a collection of FixedFrameData vbos,
     suitable for rendering using GL_TRIANGLES mode. Data will be split into
@@ -168,6 +170,7 @@ cdef class IndexedBatch:
         cdef FixedFrameData frame_data = self.get_next_vbo()
         cdef FixedVBO vertices = frame_data.vertex_vbo
         cdef MemoryBlock vertex_block = vertices.memory_block
+        Logger.debug("get_vbo_frame_to_draw")
         return vertex_block.data
 
     cdef FixedFrameData get_current_vbo(self):
@@ -176,9 +179,11 @@ cdef class IndexedBatch:
         Return:
             FixedFrameData: VBO at position **current_frame** % **frame_count**
         '''
+        Logger.debug("get_current_vbo")
         return self.frame_data[self.current_frame % self.frame_count]
 
     cdef FixedFrameData get_next_vbo(self):
+        Logger.debug("get_next_vbo")
         return self.frame_data[(self.current_frame + 1) % self.frame_count]
 
     cdef void* get_indices_frame_to_draw(self):
@@ -559,13 +564,17 @@ cdef class BatchManager:
 
         Return:
             tuple: batch_id, vert_index, indices_index.
-        '''
-        Logger.debug("batch_entity(%s)", entity_id)
-        cdef IndexedBatch batch = self.get_batch_with_space(
-            tex_key, num_verts, num_indices)
-        cdef tuple indices = batch.add_entity(entity_id, num_verts,
-            num_indices)
-        return (batch.batch_id, indices[0], indices[1])
+        ''' 
+        cdef IndexedBatch batch
+        cdef tuple indices
+        with loggdesc_with('batch_entity(%s)'%entity_id):
+            Logger.debug("tex_key=%s num_verts=%s num_indices=%s", 
+                    tex_key, num_verts, num_indices)
+            batch = self.get_batch_with_space(
+                tex_key, num_verts, num_indices)
+            indices = batch.add_entity(entity_id, num_verts,
+                num_indices)
+            return (batch.batch_id, indices[0], indices[1])
 
     cdef bint unbatch_entity(self, unsigned int entity_id,
         unsigned int batch_id, unsigned int num_verts,
