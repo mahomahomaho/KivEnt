@@ -18,6 +18,7 @@ from kivent_core.gameworld import debug
 from kivent_core.rendering.gl_debug cimport gl_log_debug_message
 
 from ilh import loggdesc_with
+import ilh
 
 cdef class IndexedBatch:
     '''The IndexedBatch represents a collection of FixedFrameData vbos,
@@ -209,6 +210,7 @@ cdef class IndexedBatch:
         The current FixedFrameData as returned by **get_current_vbo** will be
         drawn. **current_frame** will be incremented after drawing.
         '''
+        ilh.loggdesc_begin("IB.draw_frame")
         cdef FixedFrameData frame_data = self.get_current_vbo()
         cdef FixedVBO indices = frame_data.index_vbo
         cdef FixedVBO vertices = frame_data.vertex_vbo
@@ -223,6 +225,7 @@ cdef class IndexedBatch:
         gl_log_debug_message('IndexedBatch.draw_frame-glDrawElements')
         vertices.unbind()
         indices.unbind()
+        ilh.loggdesc_end()
 
     cdef void clear_frames(self):
         '''Clears all frames, returning their memory and deleting the members
