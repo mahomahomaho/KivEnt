@@ -156,7 +156,7 @@ def build_extensions_for_modules_cython(ext_list, modules):
         if environ.get('READTHEDOCS', None) == 'True':
             ext.pyrex_directives = {'embedsignature': True}
         ext_a(ext)
-    return cythonize(ext_list)
+    return cythonize(ext_list, gdb_debug=True)
 
 
 def build_extensions_for_modules(ext_list, modules):
