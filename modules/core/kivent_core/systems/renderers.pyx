@@ -149,34 +149,39 @@ cdef class RenderComponent(MemComponent):
                     component_data.texkey)
 
         def __set__(self, str value):
-            loggdesc_begin("texture_key.set")
             cdef RenderStruct* component_data = <RenderStruct*>self.pointer
-            cdef unsigned int groupkey = (
-                texture_manager.get_groupkey_from_texkey(component_data.texkey))
-            cdef unsigned int texkey = texture_manager.get_texkey_from_name(
-                value)
-            cdef float u0, v0, u1, v1
-            cdef list uv_list = texture_manager.get_uvs(texkey)
-            u0, v0, u1, v1 = uv_list
-            same_batch = texture_manager.get_texkey_in_group(texkey, groupkey)
-            cdef VertexModel model = <VertexModel>component_data.model
             cdef Renderer renderer = <Renderer>component_data.renderer
-            
-            if not same_batch:
-                Logger.debug("not_same_batch")
-                renderer._unbatch_entity(component_data.entity_id,
-                    component_data)
-            component_data.texkey = texkey
-            model[0].uvs = [u0, v0]
-            model[1].uvs = [u0, v1]
-            model[2].uvs = [u1, v1]
-            model[3].uvs = [u1, v0]
-            if not same_batch:
-                Logger.debug("not_same_batch(second)")
-                renderer._batch_entity(component_data.entity_id,
-                    component_data)
+            renderer.gameworld.scheduled.append(partial(self.__texture_key_real_set__, value))
 
-            loggdesc_end()
+    def __texture_key_real_set__(self, str value):
+        loggdesc_begin("texture_key_real_set")
+        cdef RenderStruct* component_data = <RenderStruct*>self.pointer
+        cdef unsigned int groupkey = (
+            texture_manager.get_groupkey_from_texkey(component_data.texkey))
+        cdef unsigned int texkey = texture_manager.get_texkey_from_name(
+            value)
+        cdef float u0, v0, u1, v1
+        cdef list uv_list = texture_manager.get_uvs(texkey)
+        u0, v0, u1, v1 = uv_list
+        same_batch = texture_manager.get_texkey_in_group(texkey, groupkey)
+        cdef VertexModel model = <VertexModel>component_data.model
+        cdef Renderer renderer = <Renderer>component_data.renderer
+        
+        if not same_batch:
+            Logger.debug("not_same_batch")
+            renderer._unbatch_entity(component_data.entity_id,
+                component_data)
+        component_data.texkey = texkey
+        model[0].uvs = [u0, v0]
+        model[1].uvs = [u0, v1]
+        model[2].uvs = [u1, v1]
+        model[3].uvs = [u1, v0]
+        if not same_batch:
+            Logger.debug("not_same_batch(second)")
+            renderer._batch_entity(component_data.entity_id,
+                component_data)
+
+        loggdesc_end()
 
 
     property render:

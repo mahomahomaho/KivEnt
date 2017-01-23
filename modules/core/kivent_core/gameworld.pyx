@@ -156,6 +156,8 @@ class GameWorld(Widget):
         self.animation_manager = AnimationManager()
         self.register_manager("animation_manager", self.animation_manager)
 
+        self.scheduled = []
+
 
 
     def register_manager(self, str manager_name, object manager_object):
@@ -512,16 +514,19 @@ class GameWorld(Widget):
         Typically you will call this function using either Clock.schedule_once
         or Clock.schedule_interval
         '''
-        #loggdesc_begin("gameworld.update")
         cdef SystemManager system_manager = self.system_manager
         cdef list systems = system_manager.systems
         cdef GameSystem system
+
+        for sch in self.scheduled:
+            sch()
+        self.scheduled = []
+
         for system_index in system_manager._update_order:
             system = systems[system_index]
             if system.updateable and not system.paused:
                 system._update(dt)
         self.remove_entities()
-        #loggdesc_end()
 
     def remove_entities(self):
         '''Used internally to remove entities as part of the update tick'''
