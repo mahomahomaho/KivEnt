@@ -593,6 +593,7 @@ cdef class TextureManager(GameManager):
             self._uvs[key_count] = [0., 0., 1., 1.]
             self._groups[key_count] = [key_count]
             self._key_count += 1
+            Logger.debug("load_texture(%s, %s), self._textures.keys()=%r",name, texture, self._textures.keys())
         return key_count
 
     def unload_texture(self, name):

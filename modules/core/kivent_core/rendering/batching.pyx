@@ -391,6 +391,7 @@ cdef class BatchManager:
         self.set_mode(mode_str)
         self.canvas = canvas
 
+
     cdef unsigned int get_size(self):
         '''Returns the combined size of all memory being used by the
         BatchManager: the **indices_block**, the **batch_block** and all
@@ -484,12 +485,12 @@ cdef class BatchManager:
             self.batches.append(batch)
             new_index = self.batch_count
             self.batch_count += 1
-            cmesh = CMesh(batch=batch)
-            batch.mesh_instruction = cmesh
+            #cmesh = CMesh(batch=batch)
+            #batch.mesh_instruction = cmesh
         batch.batch_id = new_index
-        self.canvas.add(cmesh)
+        #self.canvas.add(cmesh)
         cdef dict batch_groups = self.batch_groups
-        cmesh.texture = texture_manager.get_texture(tex_key)
+        #cmesh.texture = texture_manager.get_texture(tex_key)
         if tex_key not in batch_groups:
             batch_groups[tex_key] = [batch]
         else:
@@ -507,8 +508,8 @@ cdef class BatchManager:
         cdef IndexedBatch batch = self.batches[batch_id]
         cdef unsigned int tex_key = batch.tex_key
         self.batch_groups[tex_key].remove(batch)
-        self.canvas.remove(batch.mesh_instruction)
-        batch.clear_frames()
+        #self.canvas.remove(batch.mesh_instruction)
+        #batch.clear_frames()
         self.free_batches.append(batch_id)
         return 1
 
@@ -561,6 +562,7 @@ cdef class BatchManager:
         '''
         cdef IndexedBatch batch = self.get_batch_with_space(
             tex_key, num_verts, num_indices)
+
         cdef tuple indices = batch.add_entity(entity_id, num_verts,
             num_indices)
         return (batch.batch_id, indices[0], indices[1])
@@ -596,7 +598,7 @@ cdef class BatchManager:
         '''
         cdef IndexedBatch batch = self.batches[batch_id]
         batch.remove_entity(entity_id, num_verts, vert_index, num_indices,
-            ind_index)
+                ind_index)
         if batch.check_empty():
             self.remove_batch(batch_id)
         return 1
