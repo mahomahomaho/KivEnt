@@ -6,7 +6,6 @@ from kivy.properties import (
     )
 from kivy.graphics import Callback
 from kivy.graphics.instructions cimport RenderContext
-from kivy.logger import Logger
 from kivent_core.rendering.vertex_formats cimport (
     VertexFormat4F, VertexFormat2F4UB, VertexFormat7F, VertexFormat4F4UB,
     VertexFormat7F4UB
@@ -601,8 +600,8 @@ cdef class Renderer(StaticMemGameSystem):
                                 vertex.uvs[1] = model_vertex.uvs[1]
                             index_offset += model._index_count
                     batch.set_index_count_for_frame(index_offset)
-                #mesh_instruction = batch.mesh_instruction
-                #mesh_instruction.flag_update()
+                mesh_instruction = batch.mesh_instruction
+                mesh_instruction.flag_update()
 
     def remove_component(self, unsigned int component_index):
         cdef IndexedMemoryZone components = self.imz_components
@@ -1343,3 +1342,4 @@ Factory.register('ColorRenderer', cls=ColorRenderer)
 Factory.register('PolyRenderer', cls=PolyRenderer)
 Factory.register('ColorPolyRenderer', cls=ColorPolyRenderer)
 Factory.register('ScaledPolyRenderer', cls=ScaledPolyRenderer)
+
