@@ -1,11 +1,14 @@
+from functools import partial
+from os.path import dirname, join, abspath
+from random import randint, choice
+from math import radians, pi, sin, cos
+
 from kivy.app import App
 from kivy.logger import Logger
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.vector import Vector
-from random import randint, choice
-from math import radians, pi, sin, cos
 import kivent_core
 import kivent_cymunk
 from kivent_core.gameworld import GameWorld
@@ -17,30 +20,13 @@ from kivent_core.systems.position_systems import PositionSystem2D
 from kivent_core.systems.rotate_systems import RotateSystem2D
 from kivent_cymunk.interaction import CymunkTouchSystem
 from kivy.properties import StringProperty, NumericProperty
-from functools import partial
-from os.path import dirname, join, abspath
+
+from concave2convex import concave2convex, cached_c2c
+from debugdraw import gnuplot_verts
 
 texture_manager.load_atlas(join(dirname(dirname(abspath(__file__))), 'assets', 
     'background_objects.atlas'))
 
-def cross(v1, v2):
-    return v1.x*v2.y - v1.y*v2.x
-
-def fix_winding(verts):
-    v1 = Vector(verts[0]) - Vector(verts[1])
-    v2 = Vector(verts[1]) - Vector(verts[2])
-    v3 = Vector(verts[2]) - Vector(verts[0])
-
-    v1x2 = cross(v1, v2)
-    v2x3 = cross(v2, v3)
-
-    if abs(v1x2) < 1.0 or abs(v2x3) < 1.0:
-        return None
-
-    if v1x2 < 0:
-        return verts
-    else:
-        return verts[::-1]
 
 
 class TestGame(Widget):
@@ -63,66 +49,22 @@ class TestGame(Widget):
 
         self.load_svg('objects.svg', self.gameworld)
 
-    def normalize_info(self, info):
-        def _median(li):
-            li = sorted(li)
-            lenli = len(li)
-            if lenli % 2: 
-                return li[lenli//2]
-            else:
-                return (li[lenli//2 - 1] + li[lenli//2])/2.0
-
-        #first - calculate (very roughly middle of the object), median
-        xmid = _median([ x['pos'][0] for x in info.vertices.values()])
-        ymid = _median([ x['pos'][1] for x in info.vertices.values()])
-
-        ret = SVGModelInfo(info.indices,
-                       info.vertices.copy(),
-                       custom_data=info.custom_data,
-                       description=info.description,
-                       element_id=info.element_id,
-                       title=info.title,
-                       path_vertices=info.path_vertices[:]
-                       )
-
-        #now substract it from vertices
-        for k in ret.vertices:
-            v = ret.vertices[k].copy()
-            x, y = v['pos']
-            v['pos'] = (x - xmid, y - ymid)
-            ret.vertices[k] = v
-
-        #and path vertices
-        for i, (x, y) in enumerate(ret.path_vertices):
-            ret.path_vertices[i] = (x - xmid, y - ymid)
-        
-        return ret, (xmid, ymid)
-
-
     def load_svg(self, fname, gameworld):
         mm = gameworld.model_manager
         data = mm.get_model_info_for_svg(fname)
 
         for info in data['model_info']:
             
-            pos = (randint(0, 200), randint(0, 200))
-            #info, pos = self.normalize_info(info)
+            pos = (randint(0, 600), randint(0, 400))
 
             Logger.debug("adding object with title/element_id=%s/%s and desc=%s", info.title, info.element_id, info.description)
             model_name = mm.load_model_from_model_info(info, data['svg_name'])
 
-            indices = info.indices[:]
             shapeno = 0
             shapes = []
-            while indices:
-                tr_indices, indices = indices[:3], indices[3:]
-                tr_verts = [info.vertices[x]['pos'] for x in tr_indices]
-
-                tr_verts = fix_winding(tr_verts)
-                if tr_verts is None:
-                    continue
-
-                triangle_shape = {
+            for poly in cached_c2c(info.path_vertices):
+                
+                shape = {
                     'shape_type': 'poly',
                     'elasticity': 0.6,
                     'collision_type': 1,
@@ -130,13 +72,15 @@ class TestGame(Widget):
                     'shape_info': {
                         'mass': 50,
                         'offset': (0, 0),
-                        'vertices': tr_verts
+                        'vertices': poly
                     }
 
                 }
                 Logger.debug("shape %s added", shapeno)
                 shapeno += 1
-                shapes.append(triangle_shape)
+                shapes.append(shape)
+
+            #gnuplot_verts(*[x['shape_info']['vertices'] for x in shapes])
            
 
 
