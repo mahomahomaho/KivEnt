@@ -117,7 +117,6 @@ def concave2convex(path, desired_area=0.1, min_area=0.01):
     min_area *= path_area
     
     path = fix_winding(path)
-    debug_polys = []
 
     rotate_cnt = 0
     while True:
@@ -156,7 +155,7 @@ def concave2convex(path, desired_area=0.1, min_area=0.01):
             lgarea = area(lgpiece)
 
 def cached_c2c(path, cache_dir=".convexpolys", **kwargs):
-    pathhash = str(hash(tuple(path)))
+    pathhash = str(hash(tuple(path + kwargs.items())))
     fname = os.path.join(cache_dir, pathhash)
     try:
         fp = open(fname, "r")

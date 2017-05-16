@@ -62,7 +62,7 @@ class TestGame(Widget):
 
             shapeno = 0
             shapes = []
-            for poly in cached_c2c(info.path_vertices):
+            for poly in cached_c2c(info.path_vertices, min_area=0.00001):
                 
                 shape = {
                     'shape_type': 'poly',
@@ -80,7 +80,7 @@ class TestGame(Widget):
                 shapeno += 1
                 shapes.append(shape)
 
-            #gnuplot_verts(*[x['shape_info']['vertices'] for x in shapes])
+            gnuplot_verts(*[x['shape_info']['vertices'] for x in shapes], single=True, pdf=False)
            
 
 
