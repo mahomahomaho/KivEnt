@@ -1,6 +1,7 @@
 from functools import partial
 from os.path import dirname, join, abspath
 from random import randint, choice
+import signal
 from math import radians, pi, sin, cos
 
 from kivy.app import App
@@ -21,8 +22,8 @@ from kivent_core.systems.rotate_systems import RotateSystem2D
 from kivent_cymunk.interaction import CymunkTouchSystem
 from kivy.properties import StringProperty, NumericProperty
 
-from concave2convex import concave2convex, cached_c2c
-from debugdraw import gnuplot_verts
+from concave2convex import merge_triangles, cached_mtr
+from debugdraw import gv
 
 texture_manager.load_atlas(join(dirname(dirname(abspath(__file__))), 'assets', 
     'background_objects.atlas'))
@@ -46,6 +47,7 @@ class TestGame(Widget):
         self.app.count -= 1
 
     def draw_some_stuff(self):
+        self.gameworld.clear_entities()
 
         self.load_svg('objects.svg', self.gameworld)
 
@@ -53,16 +55,22 @@ class TestGame(Widget):
         mm = gameworld.model_manager
         data = mm.get_model_info_for_svg(fname)
 
+        posvel = {
+                    'spiral': ((200, 200), (0, 0)), 
+                    'ball': ((500, 30), (-200, 0))
+                }
+
         for info in data['model_info']:
-            
-            pos = (randint(0, 600), randint(0, 400))
+
+            pos, vel = posvel[info.element_id]
 
             Logger.debug("adding object with title/element_id=%s/%s and desc=%s", info.title, info.element_id, info.description)
             model_name = mm.load_model_from_model_info(info, data['svg_name'])
 
             shapeno = 0
             shapes = []
-            for poly in cached_c2c(info.path_vertices, min_area=0.00001):
+            for poly in cached_mtr(info.path_vertices):
+            #for poly in merge_triangles(info.path_vertices):
                 
                 shape = {
                     'shape_type': 'poly',
@@ -80,13 +88,14 @@ class TestGame(Widget):
                 shapeno += 1
                 shapes.append(shape)
 
-            gnuplot_verts(*[x['shape_info']['vertices'] for x in shapes], single=True, pdf=False)
-           
+            #shapepolys = [x['shape_info']['vertices'] for x in shapes]
+            #gv(shapepolys, pdf=False)
+
 
 
             physics = {
                     'main_shape': 'poly',
-                    'velocity': (0, 0),
+                    'velocity': vel,
                     'position': pos,
                     'angle': 0,
                     'angular_velocity': radians(0),
@@ -132,7 +141,6 @@ class DebugPanel(Widget):
 
 class YourAppNameApp(App):
     count = NumericProperty(0)
-
 
 if __name__ == '__main__':
     YourAppNameApp().run()
