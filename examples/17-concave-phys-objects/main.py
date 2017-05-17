@@ -39,8 +39,8 @@ class TestGame(Widget):
 
     def init_game(self):
         self.setup_states()
-        self.set_state()
         self.draw_some_stuff()
+        self.set_state()
 
     def destroy_created_entity(self, ent_id, dt):
         self.gameworld.remove_entity(ent_id)
@@ -56,8 +56,8 @@ class TestGame(Widget):
         data = mm.get_model_info_for_svg(fname)
 
         posvel = {
-                    'spiral': ((200, 200), (0, 0)), 
-                    'ball': ((500, 30), (-200, 0))
+                    'spiral': ((300, 300), (0, 0)), 
+                    'ball': ((600, 130), (-800, 0))
                 }
 
         for info in data['model_info']:
@@ -74,9 +74,9 @@ class TestGame(Widget):
                 
                 shape = {
                     'shape_type': 'poly',
-                    'elasticity': 0.6,
+                    'elasticity': 0.8,
                     'collision_type': 1,
-                    'friction': 1.0,
+                    'friction': 0.1,
                     'shape_info': {
                         'mass': 50,
                         'offset': (0, 0),
@@ -100,7 +100,7 @@ class TestGame(Widget):
                     'angle': 0,
                     'angular_velocity': radians(0),
                     'ang_vel_limit': radians(0),
-                    'mass': 50, 
+                    'mass': 0 if info.element_id == 'spiral' else 50, 
                     'col_shapes': shapes
             }
 
@@ -111,17 +111,21 @@ class TestGame(Widget):
                     'rotate': radians(0),
             }
 
-            ent = gameworld.init_entity(create_dict, ['position', 'rotate', 'poly_renderer', 'cymunk_physics'])
+            #need to pause it a bit
+            Clock.schedule_once(partial(self.init_entity, create_dict))
             self.app.count += 1
+
+    def init_entity(self, create_dict, dt):
+        self.gameworld.init_entity(create_dict, ['position', 'rotate', 'poly_renderer', 'cymunk_physics'])
 
     def update(self, dt):
         self.gameworld.update(dt)
 
     def setup_states(self):
         self.gameworld.add_state(state_name='main', 
-            systems_added=['poly_renderer'],
+            systems_added=['poly_renderer', 'cymunk_physics'],
             systems_removed=[], systems_paused=[],
-            systems_unpaused=['poly_renderer'],
+            systems_unpaused=['poly_renderer', 'cymunk_physics'],
             screenmanager_screen='main')
 
     def set_state(self):
