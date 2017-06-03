@@ -6,6 +6,7 @@ from kivy.properties import (
     )
 from kivy.graphics import Callback
 from kivy.graphics.instructions cimport RenderContext
+from kivy.logger import Logger
 from kivent_core.rendering.vertex_formats cimport (
     VertexFormat4F, VertexFormat2F4UB, VertexFormat7F, VertexFormat4F4UB,
     VertexFormat5F4UB, VertexFormat7F4UB
@@ -693,6 +694,7 @@ cdef class Renderer(StaticMemGameSystem):
         cdef VertexModel model = <VertexModel>component_data.model
         cdef unsigned int texkey = texture_manager.get_groupkey_from_texkey(
             component_data.texkey)
+        Logger.debug("in _batch_entity model._vertex_count=%s model._index_count=%s", model._vertex_count, model._index_count)
         batch_indices = self.batch_manager.batch_entity(entity_id,
             texkey, model._vertex_count, model._index_count)
         component_data.batch_id = batch_indices[0]
