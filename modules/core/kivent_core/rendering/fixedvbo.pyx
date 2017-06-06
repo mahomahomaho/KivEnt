@@ -2,6 +2,7 @@
 from kivy.graphics.context cimport Context, get_context
 from kivy.graphics.cgl cimport (GL_ARRAY_BUFFER, GL_STREAM_DRAW,
     GL_ELEMENT_ARRAY_BUFFER, cgl)
+from kivy.logger import Logger
 from kivent_core.rendering.gl_debug cimport gl_log_debug_message
 from kivent_core.memory_handlers.block cimport MemoryBlock
 from vertex_format cimport KEVertexFormat
@@ -133,7 +134,12 @@ cdef class FixedVBO:
             self.flags |= V_HAVEID
         cgl.glBindBuffer(self.target, self.id)
         gl_log_debug_message('FixedVBO.update_buffer-glBindBuffer')
-        if data_size != self.size_last_frame:
+        if True: #data_size != self.size_last_frame:
+            Logger.debug("glBufferData(target=%r data_size=%r usage=%r)", self.target, data_size, self.usage)
+            for x in range(0, self.data_size, 20):
+                line = ""
+                for y in range(x, min(self.data_size, x + 20)):
+                    line += hex(<char> (indices + y)))
             cgl.glBufferData(
                 self.target, data_size, self.memory_block.data, self.usage)
             gl_log_debug_message('FixedVBO.update_buffer-glBufferData')

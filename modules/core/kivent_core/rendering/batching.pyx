@@ -208,10 +208,6 @@ cdef class IndexedBatch:
         cdef FixedFrameData frame_data = self.get_current_vbo()
         cdef FixedVBO indices = frame_data.index_vbo
         cdef FixedVBO vertices = frame_data.vertex_vbo
-        #if indices.data_size > 100000:
-        #    return
-        Logger.debug("no draw_frame bitch")
-        return
         gl_log_debug_message('IndexedBatch.draw_frame-vertices bind')
         vertices.bind()
         gl_log_debug_message('IndexedBatch.draw_frame-indices bind')
@@ -219,10 +215,6 @@ cdef class IndexedBatch:
         
         Logger.info("glDrawElements(mode=%s indices.data_size=%s",
                         self.mode, indices.data_size)
-        #import hexdump
-        #to_dump = (<str>indices.memory_block.master_buffer.data)[:indices.data_size]
-        #print hexdump.hexdump(to_dump)
-        Logger.info("vertices.data_size=%s. Sizeof(GLushort)=%s", vertices.data_size, sizeof(GLushort))
 
         cgl.glDrawElements(self.mode, indices.data_size // sizeof(GLushort),
             GL_UNSIGNED_SHORT, NULL)
