@@ -212,15 +212,19 @@ cdef class IndexedBatch:
         vertices.bind()
         gl_log_debug_message('IndexedBatch.draw_frame-indices bind')
         indices.bind()
-        
-        Logger.info("glDrawElements(mode=%s indices.data_size=%s",
+       
+        Logger.info("glDrawElements(mode=%s indices.data_size=%s)",
                         self.mode, indices.data_size)
 
         cgl.glDrawElements(self.mode, indices.data_size // sizeof(GLushort),
             GL_UNSIGNED_SHORT, NULL)
+        Logger.info("after glDrawElements")
         gl_log_debug_message('IndexedBatch.draw_frame-glDrawElements')
         vertices.unbind()
+        Logger.info("after vertices undbind")
         indices.unbind()
+        Logger.info("after indices unbind")
+
 
     cdef void clear_frames(self):
         '''Clears all frames, returning their memory and deleting the members
