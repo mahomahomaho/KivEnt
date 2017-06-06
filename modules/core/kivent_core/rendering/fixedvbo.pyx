@@ -1,4 +1,7 @@
 # cython: embedsignature=True
+
+import hexdump
+
 from kivy.graphics.context cimport Context, get_context
 from kivy.graphics.cgl cimport (GL_ARRAY_BUFFER, GL_STREAM_DRAW,
     GL_ELEMENT_ARRAY_BUFFER, cgl)
@@ -136,10 +139,9 @@ cdef class FixedVBO:
         gl_log_debug_message('FixedVBO.update_buffer-glBindBuffer')
         if True: #data_size != self.size_last_frame:
             Logger.debug("glBufferData(target=%r data_size=%r usage=%r)", self.target, data_size, self.usage)
-            for x in range(0, self.data_size, 20):
-                line = ""
-                for y in range(x, min(self.data_size, x + 20)):
-                    line += hex(<char> (indices + y)))
+            strdata = (<char *>self.memory_block.data)[:self.data_size]
+            Logger.debug(hexdump.hexdump(strdata))
+
             cgl.glBufferData(
                 self.target, data_size, self.memory_block.data, self.usage)
             gl_log_debug_message('FixedVBO.update_buffer-glBufferData')
