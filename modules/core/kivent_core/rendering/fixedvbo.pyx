@@ -137,7 +137,7 @@ cdef class FixedVBO:
             self.flags |= V_HAVEID
         cgl.glBindBuffer(self.target, self.id)
         gl_log_debug_message('FixedVBO.update_buffer-glBindBuffer')
-        if True: #data_size != self.size_last_frame:
+        if data_size != self.size_last_frame:
             Logger.debug("glBufferData(target=%r data_size=%r usage=%r)", self.target, data_size, self.usage)
             strdata = (<char *>self.memory_block.data)[:self.data_size]
             Logger.debug(hexdump.hexdump(strdata))
@@ -146,6 +146,9 @@ cdef class FixedVBO:
                 self.target, data_size, self.memory_block.data, self.usage)
             gl_log_debug_message('FixedVBO.update_buffer-glBufferData')
         else:
+            Logger.debug("glBufferSubData(target=%r data_size=%r)", self.target, data_size)
+            strdata = (<char *>self.memory_block.data)[:self.data_size]
+            Logger.debug(hexdump.hexdump(strdata))
             cgl.glBufferSubData(self.target, 0, data_size, self.memory_block.data)
             gl_log_debug_message('FixedVBO.update_buffer-glBufferSubData')
         self.size_last_frame = data_size
