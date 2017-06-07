@@ -13,11 +13,11 @@ TestGame:
     GameWorld:
         id: gameworld
         gamescreenmanager: gamescreenmanager
-        size_of_gameworld: 2000*1024
+        size_of_gameworld: 600*1024
         size_of_entity_block: 128
         system_count: 8
-        zones: {'general': 1000000}
-        model_format_allocations: {'vertex_format_2f4ub': (100000*1024, 100000*1024)}
+        zones: {'general': 600*1024}
+        model_format_allocations: {'vertex_format_2f4ub': (200*1024, 200*1024)}
         PositionSystem2D:
             system_id: 'position'
             gameworld: gameworld
@@ -26,11 +26,11 @@ TestGame:
         PolyRenderer:
             gameworld: gameworld
             zones: ['general']
-            frame_count: 2
+            frame_count: 1
             updateable: True
-            size_of_batches: 786
-            max_batches: 400
-            size_of_component_block: 786
+            #size_of_batches: 786
+            #max_batches: 400
+            #size_of_component_block: 786
             shader_source: 'poscolorshader.glsl'
     GameScreenManager:
         id: gamescreenmanager

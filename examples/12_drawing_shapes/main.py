@@ -1,9 +1,17 @@
+import logging
+import os
+
+#os.environ["KIVY_GL_DEBUG"] = "1"
+
 import kivy
+from kivy.logger import Logger
 from kivy.app import App
 from kivy.uix.widget import Widget
 import kivent_core
 from kivy.properties import NumericProperty, StringProperty
 from math import pi, cos, sin
+
+Logger.setLevel(logging.DEBUG)
 
 
 def get_triangle_data(side_length):
@@ -221,4 +229,5 @@ class YourAppNameApp(App):
 
 
 if __name__ == '__main__':
+    kivent_core.gameworld.debug = True
     YourAppNameApp().run()
