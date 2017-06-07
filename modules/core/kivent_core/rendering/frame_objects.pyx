@@ -1,3 +1,5 @@
+from kivy.logger import Logger
+
 from kivent_core.memory_handlers.block cimport MemoryBlock
 from vertex_format cimport KEVertexFormat
 from fixedvbo cimport FixedVBO
@@ -31,6 +33,7 @@ cdef class FixedFrameData:
         self.index_vbo = FixedVBO(
             vertex_format, index_block, 'stream', 'elements')
         self.index_vbo.data_size = 0
+        Logger.debug("set index_vbo.data_size to 0")
         self.vertex_vbo = FixedVBO(
             vertex_format, vertex_block, 'stream', 'array')
 
