@@ -1277,8 +1277,11 @@ cdef class PolyRenderer(Renderer):
         cdef bint static_rendering = self.static_rendering
         
         for batch_key in batch_groups:
+            Logger.debug("Renderer.update for batch_key=%s", batch_key)
             batches = batch_groups[batch_key]
+            Logger.debug("batches = %r", batches)
             for batch in batches:
+                Logger.debug("for batch = %r, static_rendering=%s force_update=%s", batch, static_rendering, force_update)
                 if not static_rendering or force_update:
                     entity_components = batch.entity_components
                     components_block = entity_components.memory_block

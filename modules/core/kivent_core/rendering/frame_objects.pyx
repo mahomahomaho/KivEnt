@@ -30,6 +30,7 @@ cdef class FixedFrameData:
         '''
         self.index_vbo = FixedVBO(
             vertex_format, index_block, 'stream', 'elements')
+        self.index_vbo.data_size = 0
         self.vertex_vbo = FixedVBO(
             vertex_format, vertex_block, 'stream', 'array')
 

@@ -89,6 +89,7 @@ cdef class IndexedBatch:
         cdef FixedVBO vertices = primary_frame.vertex_vbo
         cdef MemoryBlock indices_block = indices.memory_block
         cdef MemoryBlock vertex_block = vertices.memory_block
+        Logger.debug("batch add_entity num_indices=%s num_verts=%s", num_indices, num_verts)
         cdef unsigned int ind_index = indices_block.add_data(num_indices)
         cdef unsigned int vert_index = vertex_block.add_data(num_verts)
         batch_index = self.entity_components.add_entity(entity_id)
@@ -176,6 +177,7 @@ cdef class IndexedBatch:
         Return:
             FixedFrameData: VBO at position **current_frame** % **frame_count**
         '''
+        Logger.debug("self.current_frame=%s self.frame_count=%s", self.current_frame, self.frame_count)
         return self.frame_data[self.current_frame % self.frame_count]
 
     cdef FixedFrameData get_next_vbo(self):
@@ -625,6 +627,7 @@ cdef class BatchManager:
         cdef FixedFrameData frame_data
         cdef unsigned int type_size = vertex_format.vbytesize
         cdef list vbos = []
+        Logger.debug("vbo_size=%s", vbo_size)
         vbo_a = vbos.append
         for i in range(self.frame_count):
             index_block = MemoryBlock(1, sizeof(GLushort), vbo_size*1024)
