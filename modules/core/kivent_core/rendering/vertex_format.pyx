@@ -1,4 +1,5 @@
 # cython: embedsignature=True
+from kivy.logger import Logger
 from kivy.graphics.vertex cimport vertex_attr_t, VertexFormat
 from kivy.graphics.vertex import VertexFormatException
 from cython cimport Py_ssize_t
@@ -144,6 +145,10 @@ cdef class KEVertexFormat(VertexFormat):
             if attr.per_vertex == 0:
                 continue
             #commentout for sphinx
+            Logger.debug("glVertexAttribPointer(%s, %s, %s, %s, %s, %s)",
+                            attr.index, attr.size, attr.type,
+                            self.attr_normalize[i], <GLsizei>vbytesize,
+                            <long>offsets[i])
             cgl.glVertexAttribPointer(attr.index, attr.size, attr.type,
                     self.attr_normalize[i], <GLsizei>vbytesize,
                     <GLvoid*><long>offsets[i])
