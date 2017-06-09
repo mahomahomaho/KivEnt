@@ -1,5 +1,7 @@
 # cython: profile=True
 # cython: embedsignature=True
+import time
+
 from kivent_core.memory_handlers.block cimport MemoryBlock
 from kivent_core.memory_handlers.indexing cimport IndexedMemoryZone
 from kivent_core.memory_handlers.membuffer cimport Buffer
@@ -224,6 +226,7 @@ cdef class IndexedBatch:
 
         cgl.glDrawElements(self.mode, indices.data_size // sizeof(GLushort),
             GL_UNSIGNED_SHORT, NULL)
+        time.sleep(0.5)
         Logger.info("after glDrawElements")
         gl_log_debug_message('IndexedBatch.draw_frame-glDrawElements')
         vertices.unbind()

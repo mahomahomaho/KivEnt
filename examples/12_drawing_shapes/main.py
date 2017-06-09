@@ -1,7 +1,7 @@
 import logging
 import os
 
-os.environ["KIVY_GL_DEBUG"] = "1"
+#os.environ["KIVY_GL_DEBUG"] = "1"
 
 import kivy
 from kivy.logger import Logger

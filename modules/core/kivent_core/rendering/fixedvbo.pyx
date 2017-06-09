@@ -1,6 +1,7 @@
 # cython: embedsignature=True
 
 import hexdump
+import time
 
 from kivy.graphics.context cimport Context, get_context
 from kivy.graphics.cgl cimport (GL_ARRAY_BUFFER, GL_STREAM_DRAW,
@@ -151,6 +152,7 @@ cdef class FixedVBO:
             hexdump.hexdump(strdata)
             cgl.glBufferSubData(self.target, 0, data_size, self.memory_block.data)
             gl_log_debug_message('FixedVBO.update_buffer-glBufferSubData')
+        time.sleep(0.5)
         self.size_last_frame = data_size
 
     cdef void bind(self):
