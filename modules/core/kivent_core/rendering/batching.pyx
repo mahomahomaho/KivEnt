@@ -211,9 +211,13 @@ cdef class IndexedBatch:
         cdef FixedVBO indices = frame_data.index_vbo
         cdef FixedVBO vertices = frame_data.vertex_vbo
         gl_log_debug_message('IndexedBatch.draw_frame-vertices bind')
+        Logger.debug("will bind vertices")
         vertices.bind()
+        Logger.debug("ended bind vertices")
         gl_log_debug_message('IndexedBatch.draw_frame-indices bind')
+        Logger.debug("will bind indices")
         indices.bind()
+        Logger.debug("ended bind indices")
        
         Logger.info("glDrawElements(mode=%s indices.data_size=%s)",
                         self.mode, indices.data_size)
