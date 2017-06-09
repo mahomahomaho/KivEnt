@@ -150,7 +150,7 @@ cdef class KEVertexFormat(VertexFormat):
                             self.attr_normalize[i], <GLsizei>vbytesize,
                             <long>offsets[i])
             cgl.glEnableVertexAttribArray(attr.index)
-            cgl.glVertexAttribPointer(attr.index, attr.size, attr.type,
-                    self.attr_normalize[i], <GLsizei>vbytesize,
-                    <GLvoid*><long>offsets[i])
+            #cgl.glVertexAttribPointer(attr.index, attr.size, attr.type,
+            #        self.attr_normalize[i], <GLsizei>vbytesize,
+            #        <GLvoid*><long>offsets[i])
             gl_log_debug_message('KEVertexFormat.bind-glVertexAttribPointer')

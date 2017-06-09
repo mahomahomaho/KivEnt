@@ -23,6 +23,8 @@ from kivent_core.managers.resource_managers import texture_manager
 from kivent_core.managers.animation_manager import AnimationManager
 from kivy.logger import Logger
 
+Logger.info("KURWA4")
+
 debug = False
 
 def test_gameworld():

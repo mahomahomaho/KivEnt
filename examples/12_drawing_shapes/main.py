@@ -1,7 +1,7 @@
 import logging
 import os
 
-#os.environ["KIVY_GL_DEBUG"] = "1"
+os.environ["KIVY_GL_DEBUG"] = "1"
 
 import kivy
 from kivy.logger import Logger
@@ -136,6 +136,8 @@ class TestGame(Widget):
         self.setup_states()
         self.set_state()
         self.load_shapes()
+
+        self.create_shape((100,100), 'triangle_model')
 
     def create_shape(self, pos, shape_name):
         create_dict = {
