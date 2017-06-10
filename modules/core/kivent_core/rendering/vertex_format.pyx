@@ -1,5 +1,4 @@
 # cython: embedsignature=True
-import time
 
 from kivy.logger import Logger
 from kivy.graphics.vertex cimport vertex_attr_t, VertexFormat
@@ -155,5 +154,4 @@ cdef class KEVertexFormat(VertexFormat):
             cgl.glVertexAttribPointer(attr.index, attr.size, attr.type,
                     self.attr_normalize[i], <GLsizei>vbytesize,
                     <GLvoid*><long>offsets[i])
-            time.sleep(0.5)
             gl_log_debug_message('KEVertexFormat.bind-glVertexAttribPointer')
