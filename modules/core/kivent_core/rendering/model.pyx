@@ -177,9 +177,11 @@ cdef class VertexModel:
     The quad is constructed out of 2 triangle faces, the triangle reprsented by
     vertices 0, 1, 2, and the triangle represented by 2, 3, 0, this looks like:
 
-    1__2
-    | /|
-    0/_3
+    .. code-block::
+
+        1__2
+        | /|
+        0/_3
 
     A Vertex can hold arbitrary data, but it will typically hold its x, y
     position on the screen at the very least, and very often the u,v position
@@ -389,6 +391,50 @@ cdef class VertexModel:
         center_x = left + (right - left) / 2.
         self.add_all_vertex_attribute('pos', [-center_x, -center_y])
         return (center_x, center_y)
+
+
+    def flip_textured_rectangle_horizontally(self):
+        '''
+        Flip the texture of the quad horizontally
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        Do not use if your model is not a textured quad.
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u1, v1 = vertex1.uvs
+        u2, v2 = vertex2.uvs
+        u3, v3 = vertex3.uvs
+        u4, v4 = vertex4.uvs
+        vertex1.uvs = (u4, v1)
+        vertex2.uvs = (u3, v2)
+        vertex3.uvs = (u2, v3)
+        vertex4.uvs = (u1, v4)
+
+
+    def flip_textured_rectangle_vertically(self):
+        '''
+        Flip the texture of the quad horizontally
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        Do not use if your model is not a textured quad.
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u1, v1 = vertex1.uvs
+        u2, v2 = vertex2.uvs
+        u3, v3 = vertex3.uvs
+        u4, v4 = vertex4.uvs
+        vertex1.uvs = (u1, v2)
+        vertex2.uvs = (u2, v1)
+        vertex3.uvs = (u3, v4)
+        vertex4.uvs = (u4, v3)
 
 
     def copy_vertex_model(self, VertexModel to_copy):

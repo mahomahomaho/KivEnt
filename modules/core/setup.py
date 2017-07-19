@@ -1,10 +1,16 @@
 from os import environ, remove
 from platform import uname
 from os.path import join, isfile, exists
-from distutils.core import setup
-from distutils.extension import Extension
 import kivy
 from subprocess import check_output
+
+if environ.get('KIVENT_USE_SETUPTOOLS'):
+    from setuptools import setup, Extension
+    print('Using setuptools')
+else:
+    from distutils.core import setup
+    from distutils.extension import Extension
+    print('Using distutils')
 
 try:
     from Cython.Build import cythonize
@@ -137,7 +143,6 @@ for name in modules:
 
 
 def build_ext(ext_name, files, include_dirs=[]):
-    print(global_include_dirs + include_dirs)
     return Extension(ext_name, files, global_include_dirs + include_dirs,
                      extra_compile_args=[cstdarg, '-ffast-math', ] + extra_compile_args,
                      libraries=libraries, extra_link_args=extra_link_args,
@@ -147,7 +152,6 @@ def build_ext(ext_name, files, include_dirs=[]):
 extensions = []
 cymunk_extensions = []
 cmdclass = {}
-print(kivy.get_includes())
 
 def build_extensions_for_modules_cython(ext_list, modules):
     ext_a = ext_list.append
@@ -183,7 +187,7 @@ else:
 
 setup(
     name='KivEnt Core',
-    version='2.2.0dev',
+    version='2.2.0.dev0',
     description='''A game engine for the Kivy Framework.
         https://github.com/Kovak/KivEnt for more info.''',
     author='Jacob Kovac',

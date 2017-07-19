@@ -40,13 +40,25 @@ cdef class Renderer(StaticMemGameSystem):
 cdef class RotateRenderer(Renderer):
     pass
 
+cdef class RotateScaleRenderer(RotateRenderer):
+    pass
+
 cdef class RotateColorRenderer(Renderer):
+    pass
+
+cdef class RotateColorScaleRenderer(RotateColorRenderer):
     pass
 
 cdef class ColorRenderer(Renderer):
     pass
     
 cdef class PolyRenderer(Renderer):
+    pass
+
+cdef class RotatePolyRenderer(Renderer):
+    pass
+
+cdef class RotateColorScalePolyRenderer(RotatePolyRenderer):
     pass
 
 cdef class ColorPolyRenderer(Renderer):
