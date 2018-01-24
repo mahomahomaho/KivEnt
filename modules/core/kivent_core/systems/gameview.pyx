@@ -80,6 +80,8 @@ cdef class GameView(GameSystem):
     focus_entity = BooleanProperty(False)
     do_touch_zoom = BooleanProperty(False)
     do_scroll = BooleanProperty(True)
+    allow_scroll_y = BooleanProperty(True)
+    allow_scroll_x = BooleanProperty(True)
     entity_to_focus = NumericProperty(None, allownone=True)
     updateable = BooleanProperty(True)
     scale_min = NumericProperty(.5)
@@ -273,7 +275,7 @@ cdef class GameView(GameSystem):
         old_x, old_y = touch.x, touch.y
         touch.x = converted_pos[0]
         touch.y = converted_pos[1]
-        super(GameView, self).on_touch_up(touch)
+        super_result = super(GameView, self).on_touch_up(touch)
         touch.x = old_x
         touch.y = old_y
         if touch.grab_current is self:
@@ -357,8 +359,10 @@ cdef class GameView(GameSystem):
 
                     if self.do_scroll_lock and self.currentmap:
                         dist_x, dist_y = self.lock_scroll(dist_x, dist_y)
-                    self.camera_pos[0] += dist_x
-                    self.camera_pos[1] += dist_y
+                    if self.allow_scroll_x:
+                        self.camera_pos[0] += dist_x
+                    if self.allow_scroll_y:
+                        self.camera_pos[1] += dist_y
 
     def lock_scroll(self, float distance_x, float distance_y):
         currentmap = self.currentmap
